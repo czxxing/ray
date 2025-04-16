@@ -479,6 +479,20 @@ py_test(
 )
 
 py_test(
+    name = "test_plan_udf_map_op",
+    size = "small",
+    srcs = ["tests/test_plan_udf_map_op.py"],
+    tags = [
+        "exclusive",
+        "team:data",
+    ],
+    deps = [
+        ":conftest",
+        "//:ray_lib",
+    ],
+)
+
+py_test(
     name = "test_logging_dataset",
     size = "small",
     srcs = ["tests/test_logging_dataset.py"],

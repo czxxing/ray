@@ -4,6 +4,7 @@ from typing import Deque, List, Optional, Tuple
 
 import ray
 from ray.data._internal.execution.interfaces import PhysicalOperator, RefBundle
+from ray.data._internal.execution.interfaces.physical_operator import ExecutionResources
 from ray.data._internal.execution.operators.base_physical_operator import (
     OneToOneOperator,
 )
@@ -128,6 +129,10 @@ class LimitOperator(OneToOneOperator):
 
     def throttling_disabled(self) -> bool:
         return True
+
+    def max_resource_usage(self) -> ExecutionResources:
+        # This operator launches at most one task, when it slices the last block.
+        return ExecutionResources.for_limits(cpu=1)
 
     def implements_accurate_memory_accounting(self) -> bool:
         return True

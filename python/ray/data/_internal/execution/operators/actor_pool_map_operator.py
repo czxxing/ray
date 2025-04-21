@@ -301,11 +301,27 @@ class ActorPoolMapOperator(MapOperator):
             )
         return "[locality off]"
 
-    def base_resource_usage(self) -> ExecutionResources:
+    def min_resource_usage(self) -> ExecutionResources:
         min_workers = self._actor_pool.min_size()
+        num_cpus = self._ray_remote_args.get("num_cpus", 0)
+        num_gpus = self._ray_remote_args.get("num_gpus", 0)
+
+        if num_gpus > 0:
+            # To ensure that all GPUs are utilized, reserve enough resource budget
+            # to launch one task for each worker.
+            object_store_memory = (
+                self._metrics.obj_store_mem_max_pending_output_per_task * min_workers
+            )
+        else:
+            # If the actors aren't using GPUs, only reserve memory for one task.
+            object_store_memory = (
+                self._metrics.obj_store_mem_max_pending_output_per_task
+            )
+
         return ExecutionResources(
-            cpu=self._ray_remote_args.get("num_cpus", 0) * min_workers,
-            gpu=self._ray_remote_args.get("num_gpus", 0) * min_workers,
+            cpu=num_cpus * min_workers,
+            gpu=num_gpus * min_workers,
+            object_store_memory=object_store_memory,
         )
 
     def current_processor_usage(self) -> ExecutionResources:

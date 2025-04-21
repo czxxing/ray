@@ -110,8 +110,9 @@ class TaskPoolMapOperator(MapOperator):
     def progress_str(self) -> str:
         return ""
 
-    def base_resource_usage(self) -> ExecutionResources:
-        return ExecutionResources()
+    def min_resource_usage(self) -> ExecutionResources:
+        # Make sure the reserved resources are at least to allow one task.
+        return self.incremental_resource_usage()
 
     def current_processor_usage(self) -> ExecutionResources:
         num_active_workers = self.num_active_tasks()

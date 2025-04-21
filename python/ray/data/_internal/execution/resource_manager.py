@@ -20,8 +20,7 @@ from ray.data._internal.execution.util import memory_string
 from ray.data.context import DataContext
 
 if TYPE_CHECKING:
-    from ray.data._internal.execution.streaming_executor_state import OpState
-    from ray.data._internal.execution.streaming_executor_state import Topology
+    from ray.data._internal.execution.streaming_executor_state import OpState, Topology
 
 
 logger = logging.getLogger(__name__)
@@ -471,19 +470,13 @@ class ReservationOpResourceAllocator(OpResourceAllocator):
                 default_reserved.object_store_memory / 2, 1.0
             )
             # Calculate the minimum amount of resources to reserve.
-            # 1. Make sure the reserved resources are at least to allow one task.
-            min_reserved = op.incremental_resource_usage().copy()
-            # 2. To ensure that all GPUs are utilized, reserve enough resource budget
-            # to launch one task for each worker.
-            if op.base_resource_usage().gpu > 0:
-                min_workers = sum(
-                    pool.min_size() for pool in op.get_autoscaling_actor_pools()
-                )
-                min_reserved.object_store_memory *= min_workers
+            min_reserved = op.min_resource_usage().copy()
             # Also include `reserved_for_op_outputs`.
             min_reserved.object_store_memory += self._reserved_for_op_outputs[op]
             # Total resources we want to reserve for this operator.
             op_total_reserved = default_reserved.max(min_reserved)
+            # Cap the reserved resources to the operator's max resources.
+            op_total_reserved = op_total_reserved.min(op.max_resource_usage())
 
             # Check if the remaining resources are enough for op_total_reserved.
             # Note, we only consider CPU and GPU, but not object_store_memory,

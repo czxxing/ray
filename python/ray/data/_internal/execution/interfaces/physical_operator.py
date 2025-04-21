@@ -1,9 +1,8 @@
+import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
-import uuid
 
 import ray
-from .ref_bundle import RefBundle
 from ray._raylet import ObjectRefGenerator
 from ray.data._internal.execution.autoscaler.autoscaling_actor_pool import (
     AutoscalingActorPool,
@@ -14,10 +13,11 @@ from ray.data._internal.execution.interfaces.execution_options import (
 )
 from ray.data._internal.execution.interfaces.op_runtime_metrics import OpRuntimeMetrics
 from ray.data._internal.logical.interfaces import LogicalOperator, Operator
+from ray.data._internal.output_buffer import OutputBlockSizeOption
 from ray.data._internal.stats import StatsDict
 from ray.data.context import DataContext
-from ray.data._internal.output_buffer import OutputBlockSizeOption
 
+from .ref_bundle import RefBundle
 
 # TODO(hchen): Ray Core should have a common interface for these two types.
 Waitable = Union[ray.ObjectRef, ObjectRefGenerator]
@@ -542,13 +542,24 @@ class PhysicalOperator(Operator):
         """
         return ExecutionResources(0, 0, 0)
 
-    def base_resource_usage(self) -> ExecutionResources:
-        """Returns the minimum amount of resources required for execution.
+    def min_resource_usage(self) -> ExecutionResources:
+        """Returns the minimum resources to start the operator and make progress.
 
         For example, an operator that creates an actor pool requiring 8 GPUs could
-        return ExecutionResources(gpu=8) as its base usage.
+        return ExecutionResources(gpu=8) as its minimum usage.
+
+        This method is used by the resource manager to reserve minimum resources for
+        the operator.
         """
         return ExecutionResources()
+
+    def max_resource_usage(self) -> ExecutionResources:
+        """Returns the maximum resources that this operator can use right now.
+
+        This method is used by the resource manager to ensure that it doesn't
+        over-provision resources for this operator.
+        """
+        return ExecutionResources.for_limits()
 
     def incremental_resource_usage(self) -> ExecutionResources:
         """Returns the incremental resources required for processing another input.

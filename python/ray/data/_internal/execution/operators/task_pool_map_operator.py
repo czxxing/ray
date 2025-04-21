@@ -114,6 +114,27 @@ class TaskPoolMapOperator(MapOperator):
         # Make sure the reserved resources are at least to allow one task.
         return self.incremental_resource_usage()
 
+    def max_resource_usage(self) -> ExecutionResources:
+        if self._inputs_complete:
+            # If the operator has already received all input data, we know it won't
+            # launch more tasks. So, we only need to reserve resources for the tasks
+            # that are currently running.
+            num_cpus_per_task = self._ray_remote_args.get("num_cpus", 0)
+            num_gpus_per_task = self._ray_remote_args.get("num_gpus", 0)
+            object_store_memory_per_task = (
+                self._metrics.obj_store_mem_max_pending_output_per_task or 0
+            )
+            resources = ExecutionResources.for_limits(
+                cpu=num_cpus_per_task * self.num_active_tasks(),
+                gpu=num_gpus_per_task * self.num_active_tasks(),
+                object_store_memory=object_store_memory_per_task
+                * self.num_active_tasks(),
+            )
+        else:
+            resources = ExecutionResources.for_limits()
+
+        return resources
+
     def current_processor_usage(self) -> ExecutionResources:
         num_active_workers = self.num_active_tasks()
         return ExecutionResources(

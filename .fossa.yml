@@ -1,0 +1,17 @@
+version: 3
+
+paths:
+  exclude:
+    - ./bazel-out
+    - ./bazel-bin
+    - ./bazel-ray
+    - ./bazel-testlogs
+    - ./release
+    - ./.whl
+    - ./.value
+    - ./.vscode
+    - ./.ruff_cache
+    - ./.pytest_cache
+    - ./.mypy_cache
+    - ./.github
+    - ./.git

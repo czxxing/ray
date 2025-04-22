@@ -15,7 +15,6 @@ build:
 sphinx:
   configuration: doc/source/conf.py
   fail_on_warning: true
-  command: sphinx-build -b epub doc/source doc/_build/epub
 
 # We recommend specifying your dependencies to enable reproducible builds:
 # https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html

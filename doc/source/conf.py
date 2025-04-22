@@ -711,3 +711,15 @@ assert (
 ), "If ray is already imported, we will not render documentation correctly!"
 
 os.environ["RAY_TRAIN_V2_ENABLED"] = "1"
+
+# doc/conf.py 中添加或确认以下配置
+project = "Ray Documentation"
+author = "Ray Project"
+copyright = "2025, Ray Project"
+
+# 启用 EPUB 输出格式（Sphinx 内置支持，无需额外扩展）
+html_theme = "alabaster"  # 主题不影响 EPUB 生成
+epub_show_urls = "footnote"  # 可选：将链接显示为脚注
+epub_title = project  # EPUB 标题
+epub_author = author  # EPUB 作者
+epub_language = "en"  # 语言代码
